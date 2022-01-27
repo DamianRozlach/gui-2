@@ -98,6 +98,15 @@ public class Ksiazka implements Serializable {
 			return false;
 	}
 
+  boolean zwroc() {
+		if (ilosc_wypozyczonych_egzemplarzy > 0) {
+			ilosc_wypozyczonych_egzemplarzy -= 1;
+			return true;
+		}
+		else
+			return false;
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

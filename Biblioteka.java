@@ -11,11 +11,18 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
 
 
 
 // Klasa Biblioteka
-public class Biblioteka extends JFrame implements Serializable {
+public class Biblioteka extends JFrame implements Serializable  {
 
 	/**
 	 * 
@@ -122,7 +129,36 @@ public class Biblioteka extends JFrame implements Serializable {
                 ad.setVisible(true);
             }
         });
+
+        //Pozycja menu: Dodaj nową książkę
+
+        JMenuItem newBookMenuItem = new JMenuItem("Dodaj nową książke");
+        newBookMenuItem.addActionListener(new ActionListener(){
+          public void actionPerformed(ActionEvent event){
+            BookDialog adb = new BookDialog(bib);
+            adb.setVisible(true);
+          }
+        });
         
+        //Pozycja menu: usuń czytelnika
+        JMenuItem remUserMenuItem = new JMenuItem("Usuń czytelnika");
+        remUserMenuItem.addActionListener(new ActionListener(){
+          public void actionPerformed(ActionEvent event){
+            RemoveReaderDialog rrd = new RemoveReaderDialog(bib);
+            rrd.setVisible(true);
+          }
+        });
+
+        //Pozycja menu: usuń książke
+        JMenuItem remBookMenuItem = new JMenuItem("Usuń książke");
+        remBookMenuItem.addActionListener(new ActionListener(){
+          public void actionPerformed(ActionEvent event){
+            RemoveBookDialog rbd = new RemoveBookDialog(bib);
+            rbd.setVisible(true);
+          }
+        });
+
+
         // Pozycja menu: Wypozycz ksiazke czytelnikowi
         JMenuItem lendBookMenuItem = new JMenuItem("Wypozycz ksiazke czytelnikowi");
         lendBookMenuItem.setMnemonic(KeyEvent.VK_W);
@@ -134,16 +170,119 @@ public class Biblioteka extends JFrame implements Serializable {
             }
         });
 
+        // Pozycja menu: Zwróć książke
+        JMenuItem returnBookMenuItem = new JMenuItem("Zwróc ksiązke");
+        returnBookMenuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                RemoveLendDialog ad = new RemoveLendDialog(bib);
+                ad.setVisible(true);
+            }
+        });
+
+        //Pozycja menu: Pokaz informacje o koncie
+        JMenuItem infoReaderMenuItem = new JMenuItem("Informacje o koncie");
+        infoReaderMenuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                InfoReaderDialog ad = new InfoReaderDialog(bib,textArea);
+                ad.setVisible(true);
+            }
+        });
+
+        //Pozycja menu: Pokaz informacje o ksiazce 
+        JMenuItem infoBookMenuItem = new JMenuItem("Informacje o książce");
+        infoBookMenuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                InfoBookDialog ad = new InfoBookDialog(bib,textArea);
+                ad.setVisible(true);
+            }
+        });
+
         // Dodanie pozycji do menu "Biblioteka"
         lib.add(lendBookMenuItem);
+        lib.add(returnBookMenuItem);
         lib.addSeparator();
         lib.add(newReaderMenuItem);
+        lib.add(newBookMenuItem);
+        lib.addSeparator();
+        lib.add(remUserMenuItem);
+        lib.add(remBookMenuItem);
         lib.addSeparator();
         lib.add(usersMenuItem);        
         lib.add(booksMenuItem);
         lib.add(lendsMenuItem);
         lib.addSeparator();
+        lib.add(infoReaderMenuItem);
+        lib.add(infoBookMenuItem);
+        lib.addSeparator();
         lib.add(eMenuItem);
+        //Menu Zapisz
+        JMenu save =new JMenu("Zapisz/Wczytaj");
+
+        //Pozycja menu Zapisz
+        JMenuItem saving = new JMenuItem("Zapisz biblioteke");
+        saving.setToolTipText("Zapisuje aktualny biblioteki do plikow, dzieki czemu mozliwe bedzie pozniejsze jego wczytanie poleceniem wczytaj stan biblioteki");
+        saving.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+              try{
+            	  FileOutputStream fos_k = new FileOutputStream("ksiazki.ser");
+		            BufferedOutputStream bos_k = new BufferedOutputStream(fos_k);
+		            ObjectOutputStream oos_k = new ObjectOutputStream(bos_k);
+                oos_k.writeObject(ksiazki);
+                oos_k.close();
+
+                FileOutputStream fos_cz = new FileOutputStream("czytelnicy.ser");
+		            BufferedOutputStream bos_cz = new BufferedOutputStream(fos_cz);
+		            ObjectOutputStream oos_cz = new ObjectOutputStream(bos_cz);
+                oos_cz.writeObject(czytelnicy);
+                oos_cz.close();
+
+                FileOutputStream fos_w = new FileOutputStream("wypozyczenia.ser");
+		            BufferedOutputStream bos_w = new BufferedOutputStream(fos_w);
+		            ObjectOutputStream oos_w = new ObjectOutputStream(bos_w);
+                oos_w.writeObject(wypozyczenia);
+                oos_w.close();
+                
+                textArea.setText("zapisano stan biblioteki");
+              } catch (Exception e) {
+                textArea.setText("blad zapisu:"+e);
+              }
+            }		  
+        });
+
+        JMenuItem reading = new JMenuItem("Wczytaj biblioteke");
+        reading.setToolTipText("Wczytuje ostatnio zapisany stan biblioteki");
+        reading.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+              try{
+            	  FileInputStream fis_k = new FileInputStream("ksiazki.ser");
+		            BufferedInputStream bis_k = new BufferedInputStream(fis_k);
+		            ObjectInputStream ois_k = new ObjectInputStream(bis_k);
+                setKsiazki((ArrayList<Ksiazka>) ois_k.readObject());
+                ois_k.close();
+
+                FileInputStream fis_cz = new FileInputStream("czytelnicy.ser");
+		            BufferedInputStream bis_cz = new BufferedInputStream(fis_cz);
+		            ObjectInputStream ois_cz = new ObjectInputStream(bis_cz);
+                setCzytelnicy((ArrayList<Czytelnik>) ois_cz.readObject());
+                ois_cz.close();
+
+                FileInputStream fis_w = new FileInputStream("wypozyczenia.ser");
+		            BufferedInputStream bis_w = new BufferedInputStream(fis_w);
+		            ObjectInputStream ois_w = new ObjectInputStream(bis_w);
+                setWypozyczenia((ArrayList<Wypozyczenie>) ois_w.readObject());
+                ois_w.close();
+
+                textArea.setText("wczytano stan biblioteki");
+              } catch (Exception e) {
+                textArea.setText("blad wczytywania:"+e);
+              }
+            }		  
+        });
+
+        //
+        save.add(saving);
+        save.add(reading);
+
 
         // Menu "Pomoc"
         JMenu help = new JMenu("Pomoc");
@@ -163,9 +302,12 @@ public class Biblioteka extends JFrame implements Serializable {
 
         // Dodanie pozycji "O programie" do menu "Pomoc"
         help.add(about);
+
+        //
         
         // Dodanie menu "Biblioteka" i "Pomoc" do paska menu
         menubar.add(lib);
+        menubar.add(save);
         menubar.add(help);
 
         setJMenuBar(menubar);
@@ -221,6 +363,30 @@ public class Biblioteka extends JFrame implements Serializable {
 		this.wypozyczenia = wypozyczenia;
 	}
 
+  public ArrayList<Ksiazka> borrowedBooks(Czytelnik cz){
+    ArrayList<Wypozyczenie> wypozyczenia= getWypozyczenia();
+    ArrayList<Ksiazka> wypKsiazki= new ArrayList<Ksiazka>();
+    for(int i =0;i<wypozyczenia.size();i++){
+      if(wypozyczenia.get(i).getCzytelnik().equals(cz)){
+        wypKsiazki.add(wypozyczenia.get(i).getKsiazka());
+      }
+    }
+    return wypKsiazki;
+
+  }
+
+  public ArrayList<Czytelnik> bookReaders(Ksiazka k){
+    ArrayList<Wypozyczenie> wypozyczenia= getWypozyczenia();
+    ArrayList<Czytelnik> bReader= new ArrayList<Czytelnik>();
+    for(int i =0;i<wypozyczenia.size();i++){
+      if(wypozyczenia.get(i).getKsiazka().equals(k)){
+        bReader.add(wypozyczenia.get(i).getCzytelnik());
+      }
+    }
+    return bReader;
+
+  }
+
 	public long getNumer_czytelnika() {
 		return numer_czytelnika;
 	}
@@ -254,6 +420,7 @@ public class Biblioteka extends JFrame implements Serializable {
 	}
 
 	public void usunWypozyczenie(Wypozyczenie w) {
+    w.getKsiazka().zwroc();
 		wypozyczenia.remove(w);
 	}
 	
